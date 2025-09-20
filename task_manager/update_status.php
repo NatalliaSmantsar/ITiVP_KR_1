@@ -1,22 +1,10 @@
 <?php
 require 'config.php';
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-if ($id > 0) {
-    $stmt = $conn->prepare("SELECT status FROM tasks WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row = $res->fetch_assoc();
-    $stmt->close();
-
-    if ($row) {
-        $newStatus = $row['status'] === 'выполнена' ? 'не выполнена' : 'выполнена';
-        $stmt = $conn->prepare("UPDATE tasks SET status = ? WHERE id = ?");
-        $stmt->bind_param("si", $newStatus, $id);
-        $stmt->execute();
-        $stmt->close();
-    }
+if (isset($_GET['id'])) {
+    $id = (int)$_GET['id'];
+    $conn->query("UPDATE tasks SET status='выполнена' WHERE id=$id AND status='не выполнена'");
 }
 header("Location: index.php");
 exit;
+?>

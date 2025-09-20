@@ -1,37 +1,25 @@
 <?php
 require 'config.php';
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-if ($id <= 0) { header("Location: index.php"); exit; }
-
-$stmt = $conn->prepare("SELECT * FROM wishlist WHERE id = ?");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$res = $stmt->get_result();
-$item = $res->fetch_assoc();
-$stmt->close();
-
-if (!$item) { header("Location: index.php"); exit; }
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = trim($_POST['title'] ?? '');
-    $description = trim($_POST['description'] ?? '');
-    $price = $_POST['price'] ?? '';
-    $link = trim($_POST['link'] ?? '');
-    $status = $_POST['status'] ?? 'не выполнено';
-
-    if ($title === '') {
-        $error = "Название обязательно.";
-    } else {
-        $priceVal = ($price === '' ? 0.00 : (float)$price);
-        $stmt = $conn->prepare("UPDATE wishlist SET title = ?, description = ?, price = ?, link = ?, status = ? WHERE id = ?");
-        $stmt->bind_param("ssdssi", $title, $description, $priceVal, $link, $status, $id);
-        $stmt->execute();
-        $stmt->close();
-        header("Location: index.php");
-        exit;
-    }
+if (!isset($_GET['id'])) {
+    die("Не указан ID");
 }
+$id = (int)$_GET['id'];
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $title = $conn->real_escape_string($_POST['title']);
+    $description = $conn->real_escape_string($_POST['description']);
+    $price = (float)$_POST['price'];
+    $link = $conn->real_escape_string($_POST['link']);
+    $conn->query("UPDATE wishlist 
+                  SET title='$title', description='$description', price=$price, link='$link' 
+                  WHERE id=$id");
+    header("Location: index.php");
+    exit;
+}
+
+$result = $conn->query("SELECT * FROM wishlist WHERE id=$id");
+$item = $result->fetch_assoc();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -41,36 +29,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container py-4">
-  <h1>Редактировать</h1>
-  <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= e($error) ?></div>
-  <?php endif; ?>
+  <h1 class="mb-3">Редактировать желание</h1>
   <form method="post">
     <div class="mb-3">
       <label class="form-label">Название</label>
-      <input class="form-control" name="title" value="<?= e($item['title']) ?>" required>
+      <input type="text" name="title" class="form-control" value="<?= e($item['title']) ?>" required>
     </div>
     <div class="mb-3">
       <label class="form-label">Описание</label>
-      <textarea class="form-control" name="description"><?= e($item['description']) ?></textarea>
+      <textarea name="description" class="form-control"><?= e($item['description']) ?></textarea>
     </div>
     <div class="mb-3">
       <label class="form-label">Цена</label>
-      <input class="form-control" name="price" type="number" step="0.01" value="<?= $item['price'] !== null ? e($item['price']) : '' ?>">
+      <input type="number" step="0.01" name="price" class="form-control" value="<?= e($item['price']) ?>">
     </div>
     <div class="mb-3">
       <label class="form-label">Ссылка</label>
-      <input class="form-control" name="link" type="url" value="<?= e($item['link']) ?>">
+      <input type="url" name="link" class="form-control" value="<?= e($item['link']) ?>">
     </div>
-    <div class="mb-3">
-      <label class="form-label">Статус</label>
-      <select class="form-select" name="status">
-        <option value="не выполнено" <?= $item['status'] === 'не выполнено' ? 'selected' : '' ?>>не выполнено</option>
-        <option value="выполнено" <?= $item['status'] === 'выполнено' ? 'selected' : '' ?>>выполнено</option>
-      </select>
-    </div>
-    <button class="btn btn-primary" type="submit">Сохранить</button>
-    <a class="btn btn-secondary" href="index.php">Отмена</a>
+    <button class="btn btn-primary">Сохранить</button>
+    <a href="index.php" class="btn btn-secondary">Назад</a>
   </form>
 </body>
 </html>

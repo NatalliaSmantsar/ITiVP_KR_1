@@ -1,7 +1,6 @@
 <?php
 require 'config.php';
 
-// Получаем все задачи
 $query = "SELECT * FROM tasks ORDER BY created_at DESC";
 $result = $conn->query($query);
 ?>
@@ -9,12 +8,12 @@ $result = $conn->query($query);
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<title>Task Manager — Список задач</title>
+<title>Task Manager</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container py-4">
-  <h1 class="mb-3">Task Manager — список задач</h1>
-  <a class="btn btn-primary mb-3" href="add.php">Добавить задачу</a>
+  <h1 class="mb-3">Task Manager</h1>
+  <a class="btn btn-primary mb-3" href="add.php">Добавить</a>
 
   <table class="table table-bordered">
     <thead>
@@ -22,8 +21,8 @@ $result = $conn->query($query);
         <th>Название</th>
         <th>Описание</th>
         <th>Статус</th>
-        <th>Создано</th>
-        <th>Действия</th>
+        <th>Дата создания</th>
+        <th>Функционал</th>
       </tr>
     </thead>
     <tbody>
@@ -37,7 +36,9 @@ $result = $conn->query($query);
             <td>
               <a class="btn btn-sm btn-secondary" href="edit.php?id=<?= $row['id'] ?>">Редактировать</a>
               <a class="btn btn-sm btn-danger" href="delete.php?id=<?= $row['id'] ?>" onclick="return confirm('Удалить задачу?')">Удалить</a>
-              <a class="btn btn-sm btn-success" href="update_status.php?id=<?= $row['id'] ?>">Переключить статус</a>
+              <?php if ($row['status'] === 'не выполнена'): ?>
+                <a class="btn btn-sm btn-success" href="update_status.php?id=<?= $row['id'] ?>">Отметить выполненной</a>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endwhile; ?>
